@@ -4,10 +4,21 @@ const { locale, currentPath } = Astro.props;
 // Path actual sin prefijo /es /ca /en
 const rest = (currentPath || "/").replace(/^\/(es|ca|en)/, "") || "/";
 
+function hrefFor(code) {
+  if (code === 'es') {
+    // SOLO el índice español va en raíz "/"
+    if (rest === '/') return '/';
+    // En cualquier otra página, ES usa prefijo /es
+    return `/es${rest}`;
+  }
+  // EN/CA siempre con prefijo
+  return rest === '/' ? `/${code}` : `/${code}${rest}`;
+}
+
 const langs = [
-  { code: "es", label: "ESP", href: "/es" + (rest === "/" ? "" : rest) },
-  { code: "ca", label: "CAT", href: "/ca" + (rest === "/" ? "" : rest) },
-  { code: "en", label: "ENG", href: "/en" + (rest === "/" ? "" : rest) },
+  { code: 'es', label: 'ESP', href: hrefFor('es') },
+  { code: 'ca', label: 'CAT', href: hrefFor('ca') },
+  { code: 'en', label: 'ENG', href: hrefFor('en') },
 ];
 ---
 

@@ -1455,7 +1455,7 @@ body{
 .treatment-detail__img {
   width: 75%;
   height: auto;
-  border-radius: 16px;
+  border-radius: 6px;
   display: block;
   margin: 16px 0 16px;
 }

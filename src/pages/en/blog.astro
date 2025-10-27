@@ -169,39 +169,43 @@ const alternates = {
   <Footer locale="en" />
 </BaseLayout>
 
-<!-- ============ SCRIPT: SUBMIT (proxy /api/newsletter) ============ -->
 <script is:inline>
   (function(){
     const form = document.getElementById('newsletter');
     if (!form) return;
 
-    const ENDPOINT = '/api/newsletter';
+    // Enviamos DIRECTO al GAS
+    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbw_AUyKEJibWakx2lXmDnNv9waXqP9B1XHDfXHuBPwEYmNITILoKBPsFbwKEtBVF2czzg/exec';
 
     const btn = form.querySelector('.nl__btn');
-    const btnDefault = btn?.textContent || 'Subscribe';
+    const btnDefault = btn?.textContent || 'Suscribirme';
     const notice = document.getElementById('nl_notice');
 
-    const UX_SENDING = form.dataset.sending || 'Sending…';
-    const UX_OK = form.dataset.ok || 'All set! You’ve been subscribed. You’ll receive the latest dental news soon.';
-    const UX_FAIL = form.dataset.fail || 'We couldn’t subscribe you. Please try again.';
+    const UX_SENDING = form.dataset.sending || 'Enviando…';
+    const UX_OK = form.dataset.ok || '¡Suscripción exitosa!';
+    const UX_FAIL = form.dataset.fail || 'No pudimos suscribirte. Inténtalo de nuevo.';
 
-    function clearNotice(el){ if(!el) return; el.className='nl__notice'; el.textContent=''; }
-    function showNotice(el,type,msg){
+    function clearNotice(el){
       if(!el) return;
-      el.className='nl__notice ' + (type==='ok'?'nl__notice--ok':'nl__notice--err');
-      el.textContent=msg;
-      el.scrollIntoView({behavior:'smooth', block:'nearest'});
+      el.className = 'nl__notice';
+      el.textContent = '';
+    }
+    function showNotice(el, type, msg){
+      if(!el) return;
+      el.className = 'nl__notice ' + (type === 'ok' ? 'nl__notice--ok' : 'nl__notice--err');
+      el.textContent = msg;
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    let sending=false;
+    let sending = false;
 
-    form.addEventListener('submit', async (ev)=>{
+    form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      if(!form.reportValidity()||sending) return;
+      if (!form.reportValidity() || sending) return;
 
       const payload = {
-        type:'newsletter',
-        locale: document.getElementById('nl_locale')?.value || 'en',
+        type: 'newsletter',
+        locale: document.getElementById('nl_locale')?.value || 'es',
         name: document.getElementById('nl_name')?.value?.trim() || '',
         email: document.getElementById('nl_email')?.value?.trim() || '',
         page: location.pathname,
@@ -211,19 +215,73 @@ const alternates = {
       const body = new URLSearchParams(payload);
       clearNotice(notice);
 
-      const prevMinW = btn?.style.minWidth || '', prevPL = btn?.style.paddingLeft || '', prevPR = btn?.style.paddingRight || '';
-      if (btn){ sending=true; btn.disabled=true; btn.textContent=UX_SENDING; btn.classList.add('nl__btn--loading'); }
+      // Estado UI
+      const prevMinW = btn ? btn.style.minWidth : '';
+      const prevPL = btn ? btn.style.paddingLeft : '';
+      const prevPR = btn ? btn.style.paddingRight : '';
+      if (btn) {
+        sending = true;
+        btn.disabled = true;
+        btn.textContent = UX_SENDING;
+        btn.classList.add('nl__btn--loading');
+      }
 
-      try{
-        const res = await fetch(ENDPOINT,{method:'POST', body});
-        let json=null, text='', ct=res.headers.get('content-type')||'';
-        try{ if(ct.includes('application/json')) json=await res.json(); else text=await res.text(); }catch(_){ try{ text=await res.text(); }catch(__){} }
-        const ok = (res.ok===true) || (json && json.ok===true);
-        if(ok){ form.reset(); showNotice(notice,'ok',UX_OK); } else { showNotice(notice,'err',UX_FAIL); console.warn('Newsletter upstream:',{status:res.status, ct, json, text}); }
-      }catch(e){ showNotice(notice,'err',UX_FAIL); console.error('Newsletter error:', e); }
-      finally{
-        if(btn){ sending=false; btn.disabled=false; btn.textContent=btnDefault; btn.classList.remove('nl__btn--loading'); btn.style.minWidth=prevMinW; btn.style.paddingLeft=prevPL; btn.style.paddingRight=prevPR; }
+      try {
+        // ⚠️ no-cors: la respuesta es "opaque" (no se puede leer ni ok/status/headers)
+        // Si no lanza excepción, asumimos ÉXITO.
+        await fetch(ENDPOINT, {
+          method: 'POST',
+          mode: 'no-cors',
+          // NO pongas headers con no-cors; GAS igual recibe los campos:
+          body
+        });
+
+        form.reset();
+        showNotice(notice, 'ok', UX_OK);
+      } catch (e) {
+        // Fallback sin CORS por iframe oculto (garantiza envío incluso si fetch falla)
+        try {
+          const iframe = document.createElement('iframe');
+          iframe.name = 'nl_iframe';
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
+
+          const tmpForm = document.createElement('form');
+          tmpForm.method = 'POST';
+          tmpForm.action = ENDPOINT;
+          tmpForm.target = 'nl_iframe';
+
+          for (const [k, v] of new URLSearchParams(body)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = k;
+            input.value = v;
+            tmpForm.appendChild(input);
+          }
+
+          document.body.appendChild(tmpForm);
+          tmpForm.submit();
+
+          form.reset();
+          showNotice(notice, 'ok', UX_OK);
+
+          setTimeout(() => { tmpForm.remove(); iframe.remove(); }, 2000);
+        } catch (e2) {
+          showNotice(notice, 'err', UX_FAIL);
+          console.error('[nl] fallback iframe error:', e2);
+        }
+      } finally {
+        if (btn) {
+          sending = false;
+          btn.disabled = false;
+          btn.textContent = btnDefault;
+          btn.classList.remove('nl__btn--loading');
+          btn.style.minWidth = prevMinW;
+          btn.style.paddingLeft = prevPL;
+          btn.style.paddingRight = prevPR;
+        }
       }
     });
   })();
 </script>
+

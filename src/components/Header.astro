@@ -5,22 +5,25 @@ const { locale, currentPath } = Astro.props;
 
 const nav = {
   es: [
-    ["/es", "Inicio"],    
+    ["/", "Inicio"],    
     ["/es/nosotros", "Nosotros"],  
     ["/es/tratamientos", "Tratamientos"],
-    ["/es/blog", "Blog"],         
+    ["/es/blog", "Blog"],
+    ["/es", "Cita"],           
   ],
   ca: [
     ["/ca", "Inici"],    
      ["/ca/nosotros", "Nosaltres"],     
     ["/ca/tratamientos", "Tractaments"],
-    ["/ca/blog", "Blog"],    
+    ["/ca/blog", "Blog"],  
+    ["/ca", "Cita"],   
   ],
   en: [
     ["/en", "Home"],           
     ["/en/nosotros", "About us"],  
     ["/en/tratamientos", "Treatments"],
     ["/en/blog", "Blog"],    
+    ["/en", "Cita"],   
   ],
 }[locale];
 
@@ -110,7 +113,7 @@ const treatments = {
   <div class="mainbar">
     <div class="container mainbar__inner">
       <!-- CTA móvil a la izquierda -->
-      <a class="cta cta--mobile" href={`${nav[0][0]}/cita`}>{texts.bookCtaMobile}</a>
+      <a class="cta cta--mobile" href={`${nav[4][0]}/cita`}>{texts.bookCtaMobile}</a>
 
       <!-- Logo -->
       <a href={nav[0][0]} class="logo" aria-label="Dental Sueca">
@@ -152,7 +155,7 @@ const treatments = {
 
         <!-- Botonera inferior del drawer (solo móvil) -->
         <div class="drawer-actions">
-          <a class="btn--cita" href={`${nav[0][0]}/cita`}>{texts.bookDrawerCtaMobile}</a>
+          <a class="btn--cita" href={`${nav[4][0]}/cita`}>{texts.bookDrawerCtaMobile}</a>
         </div>
 
         <!-- 🔧 CAMBIO: botón de cierre dentro del drawer (móvil) -->
@@ -177,7 +180,7 @@ const treatments = {
       </button>
 
       <!-- CTA escritorio (oculto en móvil) -->
-      <a class="cta cta--desktop" href={`${nav[0][0]}/cita`}>{texts.bookCta}</a>
+      <a class="cta cta--desktop" href={`${nav[4][0]}/cita`}>{texts.bookCta}</a>
     </div>
   </div>
 
