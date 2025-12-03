@@ -93,7 +93,6 @@ const privacyHref = `/${locale}/privacidad`;
 >
   <!-- locale correcto -->
   <input type="hidden" id="cita_locale" value={locale} />
-
   <h2 class="formc__title">{i18n.title}</h2>
   <p class="formc__subtitle">{i18n.subtitle}</p>
 
@@ -159,7 +158,9 @@ const privacyHref = `/${locale}/privacidad`;
     if (!form) return;
 
     // 🔗 Tu URL /exec
-    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbw_AUyKEJibWakx2lXmDnNv9waXqP9B1XHDfXHuBPwEYmNITILoKBPsFbwKEtBVF2czzg/exec';
+    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyEAcKXCK1y9d0bjkzL-pF-UAupGUN6XRNylKbo3Rob2NI_dpMgUWMFtzs31RH_OaEg/exec';
+
+
 
     const btn = form.querySelector('.formc__btn');
     const btnDefaultText = btn?.textContent || 'Enviar';
@@ -221,10 +222,12 @@ const privacyHref = `/${locale}/privacidad`;
       }
 
       try {
+
         const res = await fetch(ENDPOINT, { method: 'POST', body });
+
         const json = await res.json().catch(() => ({}));
 
-        if (json.ok) {
+        if (json.ok||json.success) {
           form.reset();
           showNotice('ok', UX_OK);
         } else {

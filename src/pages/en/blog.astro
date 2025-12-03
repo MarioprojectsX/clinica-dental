@@ -175,7 +175,7 @@ const alternates = {
     if (!form) return;
 
     // Enviamos DIRECTO al GAS
-    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbw_AUyKEJibWakx2lXmDnNv9waXqP9B1XHDfXHuBPwEYmNITILoKBPsFbwKEtBVF2czzg/exec';
+    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyEAcKXCK1y9d0bjkzL-pF-UAupGUN6XRNylKbo3Rob2NI_dpMgUWMFtzs31RH_OaEg/exec';
 
     const btn = form.querySelector('.nl__btn');
     const btnDefault = btn?.textContent || 'Suscribirme';
@@ -227,49 +227,35 @@ const alternates = {
       }
 
       try {
-        // ⚠️ no-cors: la respuesta es "opaque" (no se puede leer ni ok/status/headers)
-        // Si no lanza excepción, asumimos ÉXITO.
-        await fetch(ENDPOINT, {
-          method: 'POST',
-          mode: 'no-cors',
-          // NO pongas headers con no-cors; GAS igual recibe los campos:
-          body
-        });
+        // Envío mediante iframe oculto (evita problemas de CORS)
+        const iframe = document.createElement('iframe');
+        iframe.name = 'nl_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        const tmpForm = document.createElement('form');
+        tmpForm.method = 'POST';
+        tmpForm.action = ENDPOINT;
+        tmpForm.target = 'nl_iframe';
+
+        for (const [k, v] of new URLSearchParams(body)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = k;
+          input.value = v;
+          tmpForm.appendChild(input);
+        }
+
+        document.body.appendChild(tmpForm);
+        tmpForm.submit();
 
         form.reset();
         showNotice(notice, 'ok', UX_OK);
+
+        setTimeout(() => { tmpForm.remove(); iframe.remove(); }, 2000);
       } catch (e) {
-        // Fallback sin CORS por iframe oculto (garantiza envío incluso si fetch falla)
-        try {
-          const iframe = document.createElement('iframe');
-          iframe.name = 'nl_iframe';
-          iframe.style.display = 'none';
-          document.body.appendChild(iframe);
-
-          const tmpForm = document.createElement('form');
-          tmpForm.method = 'POST';
-          tmpForm.action = ENDPOINT;
-          tmpForm.target = 'nl_iframe';
-
-          for (const [k, v] of new URLSearchParams(body)) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = k;
-            input.value = v;
-            tmpForm.appendChild(input);
-          }
-
-          document.body.appendChild(tmpForm);
-          tmpForm.submit();
-
-          form.reset();
-          showNotice(notice, 'ok', UX_OK);
-
-          setTimeout(() => { tmpForm.remove(); iframe.remove(); }, 2000);
-        } catch (e2) {
-          showNotice(notice, 'err', UX_FAIL);
-          console.error('[nl] fallback iframe error:', e2);
-        }
+        showNotice(notice, 'err', UX_FAIL);
+        console.error('[nl] error:', e);
       } finally {
         if (btn) {
           sending = false;
