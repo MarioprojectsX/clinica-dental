@@ -47,12 +47,6 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
     <link rel="dns-prefetch" href="https://maps.gstatic.com" />
     <link rel="preconnect" href="https://maps.gstatic.com" crossorigin />
 
-    <!-- Preconexiones Crisp -->
-    <link rel="dns-prefetch" href="https://client.crisp.chat" />
-    <link rel="preconnect" href="https://client.crisp.chat" crossorigin />
-    <link rel="preconnect" href="https://storage.crisp.chat" crossorigin />
-    <link rel="preconnect" href="https://client.relay.crisp.chat" crossorigin />
-
     {alternates && (
       <>
         <link rel="alternate" hreflang="es" href={alternates.es} />
@@ -66,17 +60,17 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
   <body>
     <slot />
 
-    <!-- FAB del chat -->
-    <button id="chat-fab" class="chat-fab" aria-label="Abrir chat">
-      <img src="/assets/icons/chat.svg" alt="Chat" />
-    </button>
+    <!-- WhatsApp FAB -->
+    <a href="https://wa.me/34603239015" target="_blank" rel="noopener noreferrer" class="chat-fab" aria-label="Contactar por WhatsApp">
+      <img src="/assets/icons/chat.svg" alt="WhatsApp" />
+    </a>
 
     <!-- Banner de cookies (sin fondo) -->
     <div id="cookie-banner" class="ck-banner" hidden role="dialog" aria-labelledby="ck-title">
       <div class="ck-content">
         <h2 id="ck-title">Tu privacidad nos importa</h2>
         <p class="ck-text">
-          Usamos cookies para funcionalidades opcionales como el chat y contenido de terceros.
+          Usamos cookies para mejorar tu experiencia y analizar el tráfico del sitio.
           Solo se activarán si aceptas. Puedes cambiar tu decisión cuando quieras.
         </p>
         <div class="ck-actions">
@@ -95,7 +89,6 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
       document.addEventListener("DOMContentLoaded", function () {
         // ---- Constantes/refs
         const LS_KEY   = "cookieConsent";     // preferencia global persistente
-        const $fab     = document.getElementById("chat-fab");
         const $banner  = document.getElementById("cookie-banner");
         const $accept  = document.getElementById("ck-accept");
         const $reject  = document.getElementById("ck-reject");
@@ -111,27 +104,6 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
           return payload;
         }
 
-        // ===== CRISP loader (Promise) =====
-        function ensureCrispLoaded(){
-          if (window.$crisp && typeof window.$crisp.push === "function") return Promise.resolve();
-          if (window.__crispLoading instanceof Promise) return window.__crispLoading;
-
-          window.$crisp = window.$crisp || [];
-          window.$crisp.push(["config", "hide:launcher", true]);
-          window.CRISP_WEBSITE_ID = "b41a23ca-7594-4f9d-aaa6-3b7ca9cb3157";
-
-          window.__crispLoading = new Promise((resolve, reject) => {
-            const s = document.createElement("script");
-            s.src = "https://client.crisp.chat/l.js";
-            s.async = true; s.defer = true;
-            s.onload = () => resolve();
-            s.onerror = reject;
-            document.head.appendChild(s);
-          });
-
-          return window.__crispLoading;
-        }
-
         // ---- Banner (sin fondo)
         function openBanner(){ $banner.hidden = false; }
         function closeBanner(){ $banner.hidden = true;  }
@@ -142,14 +114,8 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
         // ---- Estado inicial
         // => Mostrar SIEMPRE si no hay decisión o si es "rejected"
         const prev = getConsent();
-        const hasAccepted = prev?.status === "accepted";
         if (!prev || prev.status === "rejected") {
           openBanner();
-        } else if (hasAccepted) {
-          // Precargar Crisp en idle para que el primer clic sea inmediato
-          (window.requestIdleCallback ? requestIdleCallback : (fn)=>setTimeout(fn, 800))(
-            () => { ensureCrispLoaded().catch(()=>{}); }
-          );
         }
 
         // ---- Acciones del banner
@@ -157,9 +123,7 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
           e.preventDefault(); e.stopPropagation();
           setConsent("accepted");           // consentimiento global persistente
           closeBanner();
-          ensureCrispLoaded().then(() => {
-            window.dispatchEvent(new Event("cookie:accepted"));
-          }).catch(()=>{});
+          window.dispatchEvent(new Event("cookie:accepted"));
         });
 
         $reject?.addEventListener("click", (e)=>{
@@ -168,54 +132,6 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
           closeBanner();
           window.dispatchEvent(new Event("cookie:rejected"));
         });
-
-        // ---- Chat helpers
-        function openChat(){
-          try {
-            window.$crisp.push(["do","chat:show"]);
-            window.$crisp.push(["do","chat:toggle"]);
-          } catch {}
-        }
-
-        // 👉 NUEVO: “consentimiento por acción” SOLO DE UNA VEZ (sesión)
-        // - Si NO hay "accepted" global, NO tocamos localStorage.
-        // - Marcamos un flag temporal de sesión, cargamos el script y abrimos.
-        function allowOneTimeCrispForThisSession(){
-          try { sessionStorage.setItem("temp:crisp", "1"); } catch {}
-        }
-        function hasOneTimeCrispThisSession(){
-          try { return sessionStorage.getItem("temp:crisp") === "1"; } catch { return false; }
-        }
-
-        // ---- FAB del chat
-        $fab?.addEventListener("click", ()=>{
-          const global = getConsent();         // puede ser null / accepted / rejected
-          const globallyAccepted = global?.status === "accepted";
-
-          if (globallyAccepted) {
-            // Ya había consentimiento -> aseguramos script listo y abrimos
-            ensureCrispLoaded().then(openChat).catch(()=>{});
-            return;
-          }
-
-          // Si NO hay aceptado global (null o rejected):
-          // -> NO cambiamos localStorage
-          // -> Permitimos uso puntual (solo esta sesión) y NO ocultamos el banner
-          allowOneTimeCrispForThisSession();
-          ensureCrispLoaded().then(() => {
-            // Nota: NO hacemos closeBanner(); el banner sigue visible
-            window.dispatchEvent(new Event("cookie:one-time:crisp"));
-            openChat();
-          }).catch(()=>{});
-        });
-
-        // ---- Ocultar launcher nativo de Crisp si aparece
-        function nukeCrispLauncher() {
-          document.querySelectorAll(".cc-yv368 .cc-1kr6o .cc-18ov6 .cc-1qbp0").forEach(el => el.remove());
-        }
-        const observer = new MutationObserver(nukeCrispLauncher);
-        observer.observe(document.body, { childList:true, subtree:true });
-        window.addEventListener("crisp:ready", () => { nukeCrispLauncher(); setTimeout(nukeCrispLauncher, 500); });
       });
     </script>
   </body>
