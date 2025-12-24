@@ -3,6 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
 import CitaForm from "../../components/CitaForm.astro";
+import { CONVERSION_LABELS } from '../../config/googleAds.js';
 
 const alternates = {
   es: "/es/cita",
@@ -34,4 +35,11 @@ const alternates = {
   </section>
 
   <Footer locale="es" />
+  
+  <script is:inline define:vars={{ CONVERSION_LABELS }}>
+    // Google Ads conversion tracking - Appointment page view
+    if (typeof window.trackConversion !== 'undefined') {
+      window.trackConversion(CONVERSION_LABELS.APPOINTMENT_PAGE_VIEW);
+    }
+  </script>
 </BaseLayout>

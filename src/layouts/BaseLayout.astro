@@ -1,5 +1,7 @@
 ---
 import "../pages/_app.css";
+import { GOOGLE_ADS_TAG_ID, CONVERSION_LABELS } from '../config/googleAds.js';
+
 const {
   title = "Clínica Dental",
   description = "Odontología integral en Barcelona",
@@ -28,12 +30,21 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
     <meta name="description" content={pageDescription} />
 
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17224832745"></script>
-    <script is:inline>
+    <script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_TAG_ID}`}></script>
+    <script is:inline define:vars={{ GOOGLE_ADS_TAG_ID, CONVERSION_LABELS }}>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'AW-17224832745');
+      gtag('config', GOOGLE_ADS_TAG_ID);
+      
+      // Helper to track conversions
+      window.trackConversion = function(label) {
+        if (typeof gtag !== 'undefined') {
+          gtag('event', 'conversion', {
+            'send_to': `${GOOGLE_ADS_TAG_ID}/${label}`
+          });
+        }
+      };
     </script>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -61,7 +72,7 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
     <slot />
 
     <!-- WhatsApp FAB -->
-    <a href="https://wa.me/34603239015" target="_blank" rel="noopener noreferrer" class="chat-fab" aria-label="Contactar por WhatsApp">
+    <a href="https://wa.me/34603239015" target="_blank" rel="noopener noreferrer" class="chat-fab" aria-label="Contactar por WhatsApp" onclick={`trackConversion('${CONVERSION_LABELS.WHATSAPP_CLICK}')`}>
       <img src="/assets/whatsapp.png" alt="WhatsApp" />
     </a>
 
@@ -131,6 +142,27 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
           setConsent("rejected");           // rechazo global; se seguirá mostrando en cada carga
           closeBanner();
           window.dispatchEvent(new Event("cookie:rejected"));
+        });
+        
+        // Track all CTA button clicks
+        document.querySelectorAll('.btn, .btn-hero, .btn-cta, .cta').forEach(btn => {
+          btn.addEventListener('click', function() {
+            trackConversion(CONVERSION_LABELS.CTA_CLICK);
+          });
+        });
+        
+        // Track all phone clicks
+        document.querySelectorAll('a[href^="tel:"]').forEach(link => {
+          link.addEventListener('click', function() {
+            trackConversion(CONVERSION_LABELS.PHONE_CLICK);
+          });
+        });
+        
+        // Track social media clicks
+        document.querySelectorAll('.social a, a[href*="facebook.com"], a[href*="instagram.com"], a[href*="tiktok.com"], a[href*="linkedin.com"]').forEach(link => {
+          link.addEventListener('click', function() {
+            trackConversion(CONVERSION_LABELS.SOCIAL_CLICK);
+          });
         });
       });
     </script>

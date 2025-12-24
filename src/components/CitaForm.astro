@@ -1,4 +1,6 @@
 ---
+import { CONVERSION_LABELS } from '../config/googleAds.js';
+
 const { locale = 'es' } = Astro.props;
 
 const i18n = {
@@ -152,7 +154,7 @@ const privacyHref = `/${locale}/privacidad`;
   <button type="submit" class="formc__btn">{i18n.submit}</button>
 </form>
 
-<script is:inline>
+<script is:inline define:vars={{ CONVERSION_LABELS }}>
   (function () {
     const form = document.getElementById('cita');
     if (!form) return;
@@ -230,6 +232,11 @@ const privacyHref = `/${locale}/privacidad`;
         if (json.ok||json.success) {
           form.reset();
           showNotice('ok', UX_OK);
+          
+          // Google Ads conversion tracking - Form Submission
+          if (typeof window.trackConversion !== 'undefined') {
+            window.trackConversion(CONVERSION_LABELS.FORM_SUBMIT);
+          }
         } else {
           showNotice('err', UX_FAIL);
         }

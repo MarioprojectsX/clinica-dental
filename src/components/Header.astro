@@ -1,5 +1,6 @@
 ---
 import LangSwitcher from "./LangSwitcher.astro";
+import { CONVERSION_LABELS } from '../config/googleAds.js';
 
 const { locale, currentPath } = Astro.props;
 
@@ -98,7 +99,7 @@ const treatments = {
           <span class="tel-label">{texts.phoneLabel}:</span>
           <span class="tel-short" aria-hidden="true">{texts.phoneAbbr}</span>
           <span class="telnum">
-            <a class="tel-link" href="tel:+34603239015">+34 603 23 90 15</a>
+            <a class="tel-link" href="tel:+34603239015" onclick={`trackConversion && trackConversion('${CONVERSION_LABELS.PHONE_CLICK}')`}>+34 603 23 90 15</a>
           </span>
         </span>
       </div>
@@ -113,7 +114,7 @@ const treatments = {
   <div class="mainbar">
     <div class="container mainbar__inner">
       <!-- CTA móvil a la izquierda -->
-      <a class="cta cta--mobile" href={`${nav[4][0]}/cita`}>{texts.bookCtaMobile}</a>
+      <a class="cta cta--mobile" href={`${nav[4][0]}/cita`} onclick={`trackConversion && trackConversion('${CONVERSION_LABELS.CTA_CLICK}')`}>{texts.bookCtaMobile}</a>
 
       <!-- Logo -->
       <a href={nav[0][0]} class="logo" aria-label="Dental Sueca">
@@ -155,7 +156,7 @@ const treatments = {
 
         <!-- Botonera inferior del drawer (solo móvil) -->
         <div class="drawer-actions">
-          <a class="btn--cita" href={`${nav[4][0]}/cita`}>{texts.bookDrawerCtaMobile}</a>
+          <a class="btn--cita" href={`${nav[4][0]}/cita`} onclick={`trackConversion && trackConversion('${CONVERSION_LABELS.CTA_CLICK}')`}>{texts.bookDrawerCtaMobile}</a>
         </div>
 
         <!-- 🔧 CAMBIO: botón de cierre dentro del drawer (móvil) -->
@@ -180,7 +181,7 @@ const treatments = {
       </button>
 
       <!-- CTA escritorio (oculto en móvil) -->
-      <a class="cta cta--desktop" href={`${nav[4][0]}/cita`}>{texts.bookCta}</a>
+      <a class="cta cta--desktop" href={`${nav[4][0]}/cita`} onclick={`trackConversion && trackConversion('${CONVERSION_LABELS.CTA_CLICK}')`}>{texts.bookCta}</a>
     </div>
   </div>
 
