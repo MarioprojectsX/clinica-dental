@@ -1,8 +1,8 @@
 // Google Analytics Configuration
-export const GOOGLE_ADS_TAG_ID = 'G-C0KEFB65T9';
+export const GA_MEASUREMENT_ID = 'G-C0KEFB65T9';
 
-// Conversion Labels
-export const CONVERSION_LABELS = {
+// GA4 Event Names
+export const GA_EVENTS = {
   FORM_SUBMIT: 'form_submit',
   WHATSAPP_CLICK: 'whatsapp_click',
   APPOINTMENT_PAGE_VIEW: 'appointment_page_view',
@@ -13,18 +13,9 @@ export const CONVERSION_LABELS = {
   LINK_CLICK: 'link_click',
 };
 
-// Helper function to track conversions
-export function trackConversion(label, value = null) {
+// Helper function to track GA4 events
+export function trackEvent(eventName, eventParams = {}) {
   if (typeof window !== 'undefined' && typeof window.gtag !== 'undefined') {
-    const conversionData = {
-      send_to: `${GOOGLE_ADS_TAG_ID}/${label}`,
-    };
-
-    if (value !== null) {
-      conversionData.value = value;
-      conversionData.currency = 'EUR';
-    }
-
-    window.gtag('event', 'conversion', conversionData);
+    window.gtag('event', eventName, eventParams);
   }
 }

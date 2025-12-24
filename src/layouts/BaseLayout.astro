@@ -1,6 +1,6 @@
 ---
 import "../pages/_app.css";
-import { GOOGLE_ADS_TAG_ID, CONVERSION_LABELS } from '../config/googleAds.js';
+import { GA_MEASUREMENT_ID, GA_EVENTS } from '../config/googleAds.js';
 
 const {
   title = "Clínica Dental",
@@ -30,19 +30,17 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
     <meta name="description" content={pageDescription} />
 
     <!-- Google tag (gtag.js) -->
-    <script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_TAG_ID}`}></script>
-    <script is:inline define:vars={{ GOOGLE_ADS_TAG_ID, CONVERSION_LABELS }}>
+    <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}></script>
+    <script is:inline define:vars={{ GA_MEASUREMENT_ID, GA_EVENTS }}>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', GOOGLE_ADS_TAG_ID);
+      gtag('config', GA_MEASUREMENT_ID);
       
-      // Helper to track conversions
-      window.trackConversion = function(label) {
+      // Helper to track GA4 events
+      window.trackEvent = function(eventName, eventParams = {}) {
         if (typeof gtag !== 'undefined') {
-          gtag('event', 'conversion', {
-            'send_to': `${GOOGLE_ADS_TAG_ID}/${label}`
-          });
+          gtag('event', eventName, eventParams);
         }
       };
     </script>
@@ -72,7 +70,7 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
     <slot />
 
     <!-- WhatsApp FAB -->
-    <a href="https://wa.me/34603239015" target="_blank" rel="noopener noreferrer" class="chat-fab" aria-label="Contactar por WhatsApp" onclick={`trackConversion('${CONVERSION_LABELS.WHATSAPP_CLICK}')`}>
+    <a href="https://wa.me/34603239015" target="_blank" rel="noopener noreferrer" class="chat-fab" aria-label="Contactar por WhatsApp" onclick={`trackEvent('${GA_EVENTS.WHATSAPP_CLICK}', {link_url: 'https://wa.me/34603239015'})`}>
       <img src="/assets/whatsapp.png" alt="WhatsApp" />
     </a>
 
@@ -147,21 +145,21 @@ const pageDescription = isDefaultDesc  ? (i18n[locale]?.description ?? descripti
         // Track all CTA button clicks
         document.querySelectorAll('.btn, .btn-hero, .btn-cta, .cta').forEach(btn => {
           btn.addEventListener('click', function() {
-            trackConversion(CONVERSION_LABELS.CTA_CLICK);
+            trackEvent(GA_EVENTS.CTA_CLICK, {button_text: this.textContent.trim()});
           });
         });
         
         // Track all phone clicks
         document.querySelectorAll('a[href^="tel:"]').forEach(link => {
           link.addEventListener('click', function() {
-            trackConversion(CONVERSION_LABELS.PHONE_CLICK);
+            trackEvent(GA_EVENTS.PHONE_CLICK, {phone_number: this.href});
           });
         });
         
         // Track social media clicks
         document.querySelectorAll('.social a, a[href*="facebook.com"], a[href*="instagram.com"], a[href*="tiktok.com"], a[href*="linkedin.com"]').forEach(link => {
           link.addEventListener('click', function() {
-            trackConversion(CONVERSION_LABELS.SOCIAL_CLICK);
+            trackEvent(GA_EVENTS.SOCIAL_CLICK, {link_url: this.href});
           });
         });
       });
